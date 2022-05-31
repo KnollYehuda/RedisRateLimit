@@ -16,6 +16,12 @@ logger = init_logger()
 
 # requests contexts util
 def value_by_method(method):
+    def user_id_from_token():
+        return random.randint(1, 500)
+
+    def ip_from_request():
+        return f'{random.randint(1, 4)}.{random.randint(1, 4)}.{random.randint(1, 4)}.{random.randint(1, 4)}'
+
     if method == ARequest.RequestMethod.IP:
         return ip_from_request()
     return user_id_from_token()
@@ -99,19 +105,13 @@ def rate_limit(request: ARequest, limit: int = -1, period: int = math.inf):
     return decorator
 
 
-def user_id_from_token():
-    return random.randint(1, 500)
-
-
-def ip_from_request():
-    return f'{random.randint(1,4)}.{random.randint(1,4)}.{random.randint(1,4)}.{random.randint(1,4)}'
-
-
+# test user_id scenario
 @rate_limit(request=ARequest(method=ARequest.RequestMethod.USER_ID), limit=10, period=60)
 def dog(*args, **kwargs):
     return f'dog - kwargs :: {kwargs}, args :: {args}'
 
 
+# test ip scenario
 @rate_limit(request=ARequest(method=ARequest.RequestMethod.IP), limit=15, period=60)
 def cat(*args, **kwargs):
     return f'cat :: {kwargs}, args :: {args}'
