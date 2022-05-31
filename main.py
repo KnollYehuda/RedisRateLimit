@@ -14,6 +14,13 @@ r = Redis()
 logger = init_logger()
 
 
+# requests contexts util
+def value_by_method(method):
+    if method == ARequest.RequestMethod.IP:
+        return ip_from_request()
+    return user_id_from_token()
+
+
 def rate_limit(request: ARequest, limit: int = -1, period: int = math.inf):
     from functools import wraps
     from threading import Semaphore
@@ -38,8 +45,8 @@ def rate_limit(request: ARequest, limit: int = -1, period: int = math.inf):
                 r.lset(calls_key, 0, current_time)
                 r.lset(calls_key, 1, float(calls_list[1]) + 1)
             else:
-                r.lpush(calls_key, current_time)
-                r.lpush(calls_key, 1)
+                r.rpush(calls_key, current_time)
+                r.rpush(calls_key, 1)
         except Exception as ex:
             logger.error(ex)
         calls_semaphore.release()
@@ -82,10 +89,7 @@ def rate_limit(request: ARequest, limit: int = -1, period: int = math.inf):
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
-            if request.get_method() == ARequest.RequestMethod.USER_ID:
-                request.set_value(user_id_from_token())
-            else:
-                request.set_value(ip_from_request())
+            request.set_value(value_by_method(method=request.get_method()))
             if not request_is_limited(str(request), f.__name__):
                 args += (request.get_value(), )
                 return f(*args, **kwargs)
@@ -96,11 +100,11 @@ def rate_limit(request: ARequest, limit: int = -1, period: int = math.inf):
 
 
 def user_id_from_token():
-    return random.randint(1, 72)
+    return random.randint(1, 500)
 
 
 def ip_from_request():
-    return f'{random.randint(1,50)}.{random.randint(1,40)}.{random.randint(1,30)}.{random.randint(1,20)}'
+    return f'{random.randint(1,4)}.{random.randint(1,4)}.{random.randint(1,4)}.{random.randint(1,4)}'
 
 
 @rate_limit(request=ARequest(method=ARequest.RequestMethod.USER_ID), limit=10, period=60)

@@ -8,16 +8,24 @@ class ARequest:
 
     def __init__(self, method: RequestMethod):
         self.__method = method
-        self.__value = None
+        self.__user_id = None
+        self.__ip = None
 
     def __str__(self):
-        return f"limit${'ip' if self.__method == ARequest.RequestMethod.IP else 'user_id'}${self.__value.replace('.', '-')}"
+        if self.__method == ARequest.RequestMethod.IP:
+            return f"limit$ip${self.__ip.replace('.', '-')}"
+        return f"limit$user_id${self.__user_id}"
 
     def set_value(self, value):
-        self.__value = str(value)
+        if self.__method == ARequest.RequestMethod.IP:
+            self.__ip = str(value)
+        else:
+            self.__user_id = str(value)
 
     def get_value(self):
-        return self.__value
+        if self.__method == ARequest.RequestMethod.IP:
+            return self.__ip
+        return self.__user_id
 
     def get_method(self):
         return self.__method
